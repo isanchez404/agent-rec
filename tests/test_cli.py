@@ -46,6 +46,29 @@ def test_run_command_records_process(tmp_path):
     assert len(list(Path(trace_dir).glob("*.jsonl"))) == 1
 
 
+def test_run_command_accepts_pty_flag(tmp_path):
+    trace_dir = tmp_path / "sessions"
+
+    result = runner.invoke(
+        app,
+        [
+            "run",
+            "--pty",
+            "--cwd",
+            str(tmp_path),
+            "--trace-dir",
+            str(trace_dir),
+            "--",
+            "python",
+            "-c",
+            "import sys; print('isatty=' + str(sys.stdout.isatty()))",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "isatty=True" in result.output
+
+
 def test_claude_hook_command_reads_stdin_and_appends_trace(tmp_path):
     trace = tmp_path / "trace.jsonl"
     payload = '{"session_id":"c1","hook_event_name":"PreToolUse","tool_name":"Bash"}'

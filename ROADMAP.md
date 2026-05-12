@@ -15,7 +15,7 @@ Status: done
 
 ## Phase 1: Better local recording
 
-- PTY capture for interactive agents.
+- PTY capture for interactive agents. Status: initial support added.
 - Separate stdout/stderr streams when possible.
 - Configurable output truncation.
 - File-system change watching between events.

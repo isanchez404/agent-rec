@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/isanchez404/agent-rec/schemas/trace-event.schema.json",
+  "title": "agent-rec trace event",
+  "description": "One JSONL event in an agent-rec trace.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "type", "session_id", "timestamp", "data"],
+  "properties": {
+    "schema": {
+      "const": "agent-rec.trace.v0"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "session.started",
+        "process.started",
+        "process.output",
+        "process.exited",
+        "git.snapshot",
+        "session.finished",
+        "claude_code.hook"
+      ]
+    },
+    "session_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "data": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}

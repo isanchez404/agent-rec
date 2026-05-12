@@ -38,3 +38,19 @@ def test_record_run_captures_nonzero_exit(tmp_path):
     assert result.exit_code == 7
     events = read_trace(result.trace_path)
     assert events[-1].data["exit_code"] == 7
+
+
+def test_record_run_can_allocate_pty_for_interactive_clis(tmp_path):
+    result = record_run(
+        [sys.executable, "-c", "import sys; print('isatty=' + str(sys.stdout.isatty()))"],
+        cwd=tmp_path,
+        trace_dir=tmp_path / "sessions",
+        use_pty=True,
+    )
+
+    assert result.exit_code == 0
+    events = read_trace(result.trace_path)
+    started = next(event for event in events if event.type == "process.started")
+    output = "".join(event.data["text"] for event in events if event.type == "process.output")
+    assert started.data["pty"] is True
+    assert "isatty=True" in output

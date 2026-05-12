@@ -23,6 +23,7 @@ def run(
     command: Annotated[list[str] | None, typer.Argument(help="Command to record, prefixed by --.")] = None,
     cwd: Annotated[Path, typer.Option(help="Working directory to run from.")] = Path.cwd(),
     trace_dir: Annotated[Path | None, typer.Option(help="Directory for JSONL traces.")] = None,
+    use_pty: Annotated[bool, typer.Option("--pty", help="Allocate a pseudo-terminal for interactive CLI agents.")] = False,
 ) -> None:
     """Run a command while recording terminal output and git state."""
     full_command = command or ctx.args
@@ -30,7 +31,7 @@ def run(
         full_command = full_command[1:]
     if not full_command:
         raise typer.BadParameter("provide a command after --")
-    result = record_run(full_command, cwd=cwd, trace_dir=trace_dir)
+    result = record_run(full_command, cwd=cwd, trace_dir=trace_dir, use_pty=use_pty)
     console.print(f"\n[bold]trace:[/bold] {result.trace_path}")
     raise typer.Exit(result.exit_code)
 
