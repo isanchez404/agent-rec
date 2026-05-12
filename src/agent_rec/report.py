@@ -4,6 +4,7 @@ import html
 from pathlib import Path
 
 from .events import Event, read_trace
+from .scrub import scrub_text, scrub_value
 
 
 CSS = """
@@ -12,6 +13,8 @@ header { padding: 24px 32px; background: #111827; border-bottom: 1px solid #2630
 main { display: grid; grid-template-columns: 360px 1fr; min-height: calc(100vh - 90px); }
 .timeline { border-right: 1px solid #263044; padding: 16px; overflow: auto; }
 .details { padding: 16px; overflow: auto; }
+.panes { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.pane { min-width: 0; }
 .event { padding: 10px 12px; border: 1px solid #263044; border-radius: 10px; margin-bottom: 10px; background: #111827; }
 .event strong { color: #93c5fd; }
 pre { white-space: pre-wrap; word-wrap: break-word; background: #020617; color: #d1d5db; padding: 12px; border-radius: 10px; border: 1px solid #263044; }
@@ -40,7 +43,8 @@ def summarize(events: list[Event]) -> dict[str, object]:
 def event_card(event: Event) -> str:
     title = html.escape(event.type)
     timestamp = html.escape(event.timestamp)
-    data = html.escape(str(event.data))
+    scrubbed_data = scrub_value(event.data).value
+    data = html.escape(str(scrubbed_data))
     return f'<div class="event"><strong>{title}</strong><br><span class="badge">{timestamp}</span><pre>{data}</pre></div>'
 
 
@@ -52,7 +56,11 @@ def render_report(events: list[Event]) -> str:
     changed_html = "".join(f"<li>{html.escape(str(path))}</li>" for path in changed_files)
     cards = "\n".join(event_card(event) for event in events)
     output_text = "".join(str(event.data.get("text", "")) for event in events if event.type == "process.output")
-    output_html = html.escape(output_text)
+    output_html = html.escape(scrub_text(output_text).text)
+    diff_text = "\n".join(
+        str(event.data.get("diff", "")) for event in events if event.type == "git.snapshot" and event.data.get("diff")
+    )
+    diff_html = html.escape(scrub_text(diff_text).text)
 
     return f"""<!doctype html>
 <html lang="en">
@@ -76,8 +84,16 @@ def render_report(events: list[Event]) -> str:
   <section class="details">
     <h2>Changed files</h2>
     <ul>{changed_html}</ul>
-    <h2>Process output</h2>
-    <pre>{output_html}</pre>
+    <div class="panes">
+      <div class="pane">
+        <h2>Process output</h2>
+        <pre>{output_html}</pre>
+      </div>
+      <div class="pane">
+        <h2>Git diff</h2>
+        <pre>{diff_html}</pre>
+      </div>
+    </div>
   </section>
 </main>
 </body>

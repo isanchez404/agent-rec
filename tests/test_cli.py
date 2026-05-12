@@ -44,3 +44,19 @@ def test_run_command_records_process(tmp_path):
     assert result.exit_code == 0
     assert "ok" in result.output
     assert len(list(Path(trace_dir).glob("*.jsonl"))) == 1
+
+
+def test_claude_hook_command_reads_stdin_and_appends_trace(tmp_path):
+    trace = tmp_path / "trace.jsonl"
+    payload = '{"session_id":"c1","hook_event_name":"PreToolUse","tool_name":"Bash"}'
+
+    result = runner.invoke(
+        app,
+        ["claude-hook", "--trace", str(trace), "--session-id", "s1"],
+        input=payload,
+    )
+
+    assert result.exit_code == 0
+    assert trace.exists()
+    assert "recorded Claude Code hook" in result.output
+    assert "claude_code.hook" in trace.read_text(encoding="utf-8")

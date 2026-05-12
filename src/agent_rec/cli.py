@@ -8,6 +8,7 @@ from rich.console import Console
 from rich.table import Table
 
 from .bundle import create_bundle
+from .claude_hooks import write_claude_hook_event
 from .events import read_trace
 from .recorder import record_run
 from .report import summarize, write_report
@@ -52,6 +53,17 @@ def bundle(
     """Create a portable tar.gz repro bundle."""
     create_bundle(trace, out)
     console.print(f"wrote {out}")
+
+
+@app.command("claude-hook")
+def claude_hook(
+    trace: Annotated[Path, typer.Option("--trace", help="Trace JSONL path to append to.")],
+    session_id: Annotated[str, typer.Option("--session-id", help="agent-rec session id.")],
+) -> None:
+    """Append a Claude Code hook JSON payload from stdin to a trace."""
+    payload = typer.get_text_stream("stdin").read()
+    write_claude_hook_event(payload, trace, agent_rec_session_id=session_id)
+    console.print(f"recorded Claude Code hook in {trace}")
 
 
 @app.command()
